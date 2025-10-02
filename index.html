@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bio Protocol Quiz | DeSci Knowledge Test</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
+        :root{
+            --primary:#00ff88;
+            --primary-dark:#00cc6a;
+            --bg:#0a0a0a;
+            --card:#1a1a1a;
+            --text:#ffffff;
+            --text-secondary:#aaaaaa;
+            --border:#333333;
+            --success:#00ff88;
+            --error:#ff4444;
+            --gradient:linear-gradient(135deg,#00ff88 0%,#00cc6a 100%);
+        }
+        body{
+            background:var(--bg);
+            color:var(--text);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            min-height:100vh;
+            padding:20px;
+            background-image:radial-gradient(circle at 1px 1px,rgba(255,255,255,.05) 1px,transparent 0);
+            background-size:2rem 2rem;
+        }
+        .container{
+            background:var(--card);
+            border-radius:24px;
+            width:100%;
+            max-width:680px;
+            padding:48px;
+            box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 0 1px rgba(0,255,136,.1);
+            position:relative;
+            overflow:hidden;
+        }
+        .container::before{
+            content:'';
+            position:absolute;
+            top:0;left:0;right:0;height:1px;
+            background:var(--gradient);
+            box-shadow:0 0 20px var(--primary);
+        }
+        h1{
+            text-align:center;
+            margin-bottom:8px;
+            font-size:2.5rem;
+            background:var(--gradient);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+        }
+        .subtitle{
+            text-align:center;
+            color:var(--text-secondary);
+            margin-bottom:40px;
+            font-size:1.1rem;
+        }
+        .screen{display:none}
+        .screen.active{display:block;animation:fadeIn .5s ease}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        
+        /* Start Screen */
+        .start-content{
+            text-align:center;
+            padding:20px 0;
+        }
+        .start-content p{
+            color:var(--text-secondary);
+            margin-bottom:40px;
+            font-size:1.1rem;
+            line-height:1.6;
+        }
+        .btn{
+            background:var(--gradient);
+            color:#000;
+            border:none;
+            padding:16px 32px;
+            border-radius:50px;
+            font-size:1.1rem;
+            font-weight:700;
+            cursor:pointer;
+            transition:all .3s ease;
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+        }
+        .btn:hover{
+            transform:translateY(-2px);
+            box-shadow:0 10px 30px rgba(0,255,136,.4);
+        }
+        .btn:active{transform:translateY(0)}
+        
+        /* Quiz Screen */
+        .progress{
+            height:8px;
+            background:var(--border);
+            border-radius:4px;
+            margin-bottom:40px;
+            overflow:hidden;
+        }
+        .progress-bar{
+            height:100%;
+            background:var(--gradient);
+            width:0%;
+            transition:width .5s cubic-bezier(.22,1,.36,1);
+            box-shadow:0 0 10px var(--primary);
+        }
+        .question-counter{
+            text-align:center;
+            margin-bottom:20px;
+            color:var(--text-secondary);
+            font-size:.9rem;
+        }
+        .question{
+            font-size:1.4rem;
+            margin-bottom:32px;
+            line-height:1.5;
+        }
+        .options{
+            display:flex;
+            flex-direction:column;
+            gap:16px;
+            margin-bottom:32px;
+        }
+        .option{
+            background:var(--border);
+            border:2px solid transparent;
+            border-radius:16px;
+            padding:20px 24px;
+            cursor:pointer;
+            transition:all .3s ease;
+            position:relative;
+            overflow:hidden;
+        }
+        .option::before{
+            content:'';
+            position:absolute;
+            top:0;left:0;right:0;bottom:0;
+            background:var(--gradient);
+            opacity:0;
+            transition:opacity .3s ease;
+        }
+        .option:hover{
+            border-color:var(--primary);
+            transform:translateY(-2px);
+            box-shadow:0 8px 24px rgba(0,255,136,.2);
+        }
+        .option:hover::before{opacity:.1}
+        .option.selected{
+            border-color:var(--primary);
+            background:rgba(0,255,136,.1);
+        }
+        .option.correct{
+            border-color:var(--success);
+            background:rgba(0,255,136,.15);
+            animation:pulse .6s ease;
+        }
+        .option.incorrect{
+            border-color:var(--error);
+            background:rgba(255,68,68,.15);
+            animation:shake .6s ease;
+        }
+        @keyframes pulse{
+            0%,100%{transform:scale(1)}
+            50%{transform:scale(1.02)}
+        }
+        @keyframes shake{
+            0%,100%{transform:translateX(0)}
+            25%{transform:translateX(-8px)}
+            75%{transform:translateX(8px)}
+        }
+        .feedback{
+            text-align:center;
+            padding:16px;
+            border-radius:12px;
+            font-weight:600;
+            margin-bottom:24px;
+            display:none;
+        }
+        .feedback.correct{
+            background:rgba(0,255,136,.1);
+            color:var(--success);
+            border:1px solid var(--success);
+        }
+        .feedback.incorrect{
+            background:rgba(255,68,68,.1);
+            color:var(--error);
+            border:1px solid var(--error);
+        }
+        .quiz-controls{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+        
+        /* Results Screen */
+        .results{
+            text-align:center;
+        }
+        .ai-image{
+            width:100%;
+            max-width:400px;
+            height:300px;
+            margin:20px auto;
+            border-radius:16px;
+            overflow:hidden;
+            position:relative;
+            background:var(--border);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:4rem;
+            box-shadow:0 10px 30px rgba(0,0,0,.3);
+        }
+        .ai-image img{
+            width:100%;
+            height:100%;
+            object-fit:cover;
+        }
+        .score-display{
+            position:absolute;
+            top:20px;
+            right:20px;
+            background:rgba(0,0,0,.7);
+            padding:8px 16px;
+            border-radius:20px;
+            font-size:1.2rem;
+            font-weight:700;
+            color:var(--primary);
+        }
+        .title-badge{
+            position:absolute;
+            bottom:20px;
+            left:50%;
+            transform:translateX(-50%);
+            background:var(--gradient);
+            color:#000;
+            padding:8px 20px;
+            border-radius:20px;
+            font-size:1.1rem;
+            font-weight:700;
+            box-shadow:0 4px 20px rgba(0,255,136,.3);
+        }
+        .score-circle{
+            width:200px;
+            height:200px;
+            border-radius:50%;
+            margin:30px auto;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            flex-direction:column;
+            font-size:2.5rem;
+            font-weight:700;
+            position:relative;
+            background:conic-gradient(var(--primary) var(--score-deg),var(--border) var(--score-deg));
+            transition:all 1s cubic-bezier(.22,1,.36,1);
+        }
+        .score-circle::before{
+            content:'';
+            position:absolute;
+            width:160px;
+            height:160px;
+            background:var(--card);
+            border-radius:50%;
+        }
+        .score-text{
+            position:relative;
+            z-index:1;
+        }
+        .score-label{
+            font-size:.9rem;
+            color:var(--text-secondary);
+            margin-top:4px;
+        }
+        .results-message{
+            font-size:1.4rem;
+            margin:24px 0;
+        }
+        .results-breakdown{
+            background:var(--border);
+            border-radius:16px;
+            padding:24px;
+            margin:24px 0;
+            display:grid;
+            grid-template-columns:repeat(3,1fr);
+            gap:20px;
+        }
+        .breakdown-item{
+            text-align:center;
+        }
+        .breakdown-value{
+            display:block;
+            font-size:2rem;
+            font-weight:700;
+            color:var(--primary);
+        }
+        .breakdown-label{
+            font-size:.9rem;
+            color:var(--text-secondary);
+            margin-top:4px;
+        }
+        .results-actions{
+            display:flex;
+            gap:16px;
+            justify-content:center;
+            margin-top:32px;
+        }
+        .share-btn{
+            background:transparent;
+            border:2px solid var(--primary);
+            color:var(--primary);
+            padding:14px 28px;
+            border-radius:50px;
+            font-size:1rem;
+            font-weight:600;
+            cursor:pointer;
+            transition:all .3s ease;
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+        }
+        .share-btn:hover{
+            background:var(--primary);
+            color:#000;
+        }
+        
+        /* Footer */
+        .footer{
+            position:absolute;
+            bottom:20px;
+            left:0;right:0;
+            text-align:center;
+            font-size:.85rem;
+            color:var(--text-secondary);
+        }
+        .footer a{
+            color:var(--primary);
+            text-decoration:none;
+            font-weight:500;
+        }
+        .footer a:hover{text-decoration:underline}
+        
+        @media(max-width:600px){
+            .container{padding:32px 24px}
+            h1{font-size:2rem}
+            .question{font-size:1.2rem}
+            .score-circle{width:160px;height:160px;font-size:2rem}
+            .results-breakdown{grid-template-columns:1fr}
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Start Screen -->
+        <div id="start" class="screen active">
+            <div class="start-content">
+                <h1>🧬 Bio Protocol Quiz</h1>
+                <p class="subtitle">Test your knowledge of decentralized biotech</p>
+                <p>10 questions to challenge your understanding of Bio Protocol, BioDAOs, and the future of decentralized science.</p>
+                <button class="btn" onclick="startQuiz()">Start Quiz 🚀</button>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz" class="screen">
+            <div class="question-counter">Question <span id="current">1</span> of 10</div>
+            <div class="progress">
+                <div class="progress-bar" id="progress"></div>
+            </div>
+            <div class="question" id="question"></div>
+            <div class="options" id="options"></div>
+            <div class="feedback" id="feedback"></div>
+            <div class="quiz-controls">
+                <span id="score">Score: 0</span>
+                <button class="btn" id="nextBtn" onclick="nextQuestion()" disabled>Next Question →</button>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results" class="screen results">
+            <h1>Quiz Complete! 🎉</h1>
+            
+            <!-- AI Generated Image Placeholder -->
+            <div class="ai-image" id="aiImage">
+                <div class="score-display" id="scoreDisplay">0/10</div>
+                <div class="title-badge" id="titleBadge">🌱 Learner</div>
+            </div>
+            
+            <div class="score-circle" id="scoreCircle">
+                <div class="score-text">
+                    <span id="scorePercent">0%</span>
+                    <div class="score-label">Score</div>
+                </div>
+            </div>
+            <div class="results-message" id="resultsMessage"></div>
+            <div class="results-breakdown">
+                <div class="breakdown-item">
+                    <span class="breakdown-value" id="correct">0</span>
+                    <span class="breakdown-label">Correct</span>
+                </div>
+                <div class="breakdown-item">
+                    <span class="breakdown-value" id="incorrect">0</span>
+                    <span class="breakdown-label">Incorrect</span>
+                </div>
+                <div class="breakdown-item">
+                    <span class="breakdown-value">10</span>
+                    <span class="breakdown-label">Total</span>
+                </div>
+            </div>
+            <div class="results-actions">
+                <button class="btn" onclick="restartQuiz()">Try Again</button>
+                <button class="share-btn" onclick="shareResults()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M23.643 4.937c-.835.37-1.732.62-2.675.733.962-.576 1.7-1.49 2.048-2.578-.9.534-1.897.922-2.958 1.13-.85-.904-2.06-1.47-3.4-1.47-2.572 0-4.658 2.086-4.658 4.66 0 .364.042.718.12 1.06-3.873-.195-7.304-2.05-9.602-4.868-.4.69-.63 1.49-.63 2.342 0 1.616.823 3.043 2.072 3.878-.764-.025-1.482-.234-2.11-.583v.06c0 2.257 1.605 4.14 3.737 4.568-.39.106-.803.163-1.227.163-.3 0-.593-.028-.877-.082.593 1.85 2.313 3.198 4.352 3.234-1.595 1.25-3.604 1.995-5.786 1.995-.376 0-.747-.022-1.112-.065 2.062 1.323 4.51 2.093 7.14 2.093 8.57 0 13.255-7.098 13.255-13.254 0-.2-.005-.402-.014-.602.91-.658 1.7-1.477 2.323-2.41z"/>
+                    </svg>
+                    Share on X
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            Crafted by <a href="https://x.com/AgentxN1/" target="_blank">@AgentxN1</a>
+        </div>
+    </div>
+
+    <script>
+        const quiz=[
+            {q:"What is the primary focus of Bio Protocol?",opts:["Space exploration","Biotechnology & life sciences","Fintech","AI"],ans:1},
+            {q:"What is the native governance token of Bio Protocol?",opts:["$ETH","$BIO","$DAO","$SCI"],ans:1},
+            {q:"What is the name of Bio Protocol's fundraising platform?",opts:["BioHub","Launch Pad","Science Vault","Token Forge"],ans:1},
+            {q:"What are BioDAOs?",opts:["Decentralized orgs for biotech research","Centralised labs","AI models","Patient NFTs"],ans:0},
+            {q:"Which Launch Pad feature funds new projects?",opts:["Tokenised IP auctions","GPU mining","Trial passes","Stock trading"],ans:0},
+            {q:"Which AI tool did Bio Protocol ship in Aug 2025?",opts:["BioGraph","AUBRAI","SciNet","QuantumBio"],ans:1},
+            {q:"How do $BIO holders participate?",opts:["Stake & vote","Mine tokens","Buy NFTs","Attend summits"],ans:0},
+            {q:"Which partner advances longevity research?",opts:["NASA","VitaDAO","OpenAI","Binance"],ans:1},
+            {q:"Total fixed supply of $BIO?",opts:["1B","2.5B","3.32B","5B"],ans:2},
+            {q:"Which project explored neuroprotection via DMT?",opts:["Quantum Bio","DMT Research","Longevity DAO","Rare Initiative"],ans:1}
+        ];
+        let idx=0,score=0,selected=-1;
+
+        function startQuiz(){
+            document.getElementById("start").classList.remove("active");
+            document.getElementById("quiz").classList.add("active");
+            render();
+        }
+        function render(){
+            document.getElementById("current").textContent=idx+1;
+            document.getElementById("progress").style.width=(idx*10)+"%";
+            document.getElementById("question").textContent=quiz[idx].q;
+            const box=document.getElementById("options");box.innerHTML="";
+            quiz[idx].opts.forEach((o,i)=>{
+                const div=document.createElement("div");div.className="option";
+                div.textContent=String.fromCharCode(65+i)+". "+o;
+                div.onclick=()=>select(i);
+                box.appendChild(div);
+            });
+            document.getElementById("feedback").style.display="none";
+            document.getElementById("nextBtn").disabled=true;
+            document.getElementById("score").textContent="Score: "+score;
+            selected=-1;
+        }
+        function select(i){
+            if(selected!==-1)return;
+            selected=i;
+            const opts=document.querySelectorAll(".option");
+            opts[quiz[idx].ans].classList.add("correct");
+            if(i!==quiz[idx].ans)opts[i].classList.add("incorrect");
+            document.getElementById("feedback").style.display="block";
+            document.getElementById("feedback").textContent=i===quiz[idx].ans?"✅ Correct!":"❌ Incorrect";
+            if(i===quiz[idx].ans)score++;
+            document.getElementById("nextBtn").disabled=false;
+            opts.forEach(o=>o.style.pointerEvents="none");
+        }
+        function nextQuestion(){
+            idx++;
+            if(idx===10)return showResults();
+            render();
+        }
+        function generateAIImage(score){
+            const aiImage=document.getElementById("aiImage");
+            const scoreDisplay=document.getElementById("scoreDisplay");
+            const titleBadge=document.getElementById("titleBadge");
+            const pct=score*10;
+            
+            scoreDisplay.textContent=`${score}/10`;
+            
+            // Set title and image based on score
+            let title="",emoji="",bgGradient="";
+            
+            if(score<=5){
+                title="🌱 Learner";
+                emoji="📚";
+                bgGradient="linear-gradient(135deg, #ffd93d 0%, #ff6b6b 100%)";
+            }else if(score<=7){
+                title="🚀 Pro";
+                emoji="💪";
+                bgGradient="linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%)";
+            }else if(score<=8){
+                title="⚡ Expert";
+                emoji="🎯";
+                bgGradient="linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+            }else{
+                title="👑 OG Member";
+                emoji="🔥";
+                bgGradient="linear-gradient(135deg, #f093fb 0%, #f5576c 100%)";
+            }
+            
+            titleBadge.textContent=title;
+            aiImage.style.background=bgGradient;
+            aiImage.innerHTML=`
+                <div style="font-size:6rem;filter:drop-shadow(0 4px 10px rgba(0,0,0,.3))">${emoji}</div>
+                <div class="score-display">${score}/10</div>
+                <div class="title-badge">${title}</div>
+            `;
+        }
+        function showResults(){
+            document.getElementById("quiz").classList.remove("active");
+            document.getElementById("results").classList.add("active");
+            const pct=score*10;
+            document.getElementById("scorePercent").textContent=pct+"%";
+            document.getElementById("correct").textContent=score;
+            document.getElementById("incorrect").textContent=10-score;
+            document.getElementById("scoreCircle").style.setProperty("--score-deg",(pct*3.6)+"deg");
+            
+            // Generate AI image
+            generateAIImage(score);
+            
+            let msg="";
+            if(pct>=80)msg="🏆 Outstanding! You're a Bio Protocol expert!";
+            else if(pct>=60)msg="👏 Great job! You know your DeSci!";
+            else msg="💪 Keep learning! The DeSci space moves fast!";
+            document.getElementById("resultsMessage").textContent=msg;
+        }
+        function restartQuiz(){
+            idx=0;score=0;selected=-1;
+            document.getElementById("results").classList.remove("active");
+            document.getElementById("start").classList.add("active");
+        }
+        function shareResults(){
+            const pct=score*10;
+            let title="";
+            if(score<=5)title="Learner 📚";
+            else if(score<=7)title="Pro 💪";
+            else if(score<=8)title="Expert 🎯";
+            else title="OG Member 🔥";
+            
+            const text=`I scored ${pct}% on the Bio Protocol Quiz and earned the ${title} badge! 🧬 Test your DeSci knowledge: ${location.href} #BioProtocol #DeSci`;
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,"_blank");
+        }
+    </script>
+</body>
+</html>
